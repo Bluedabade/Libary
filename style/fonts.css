@@ -1,0 +1,10 @@
+@font-face {
+  font-family: "promt";
+  src: url("../assets/fonts/Prompt-Medium.ttf");
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: "promt", sans-serif;
+}
