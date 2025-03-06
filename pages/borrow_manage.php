@@ -2,6 +2,8 @@
 session_start();
 include_once("../db/db.php");
 $pagename = "borrow_manage.php";
+unset($_SESSION['m_name']);
+unset($_SESSION['b_name']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,83 +32,14 @@ $pagename = "borrow_manage.php";
                         </form>
                     </div>
                     <div class="col-md-6 text-end">
-                        <button type="button" class="btn btn-success " data-bs-toggle="modal" data-bs-target="#borrow_book">
+                        <a href="borrow.php" class="btn btn-success "  >
                             ยืมหนังสือ
-                        </button>
-                        <button type="button" class="btn btn-warning " data-bs-toggle="modal" data-bs-target="#return_book">
+                        </a>
+                        <a href="borrow.php" type="button" class="btn btn-warning " data-bs-toggle="modal" data-bs-target="#return_book">
                             คืนหนังสือ
-                        </button>
-                    </div>
-                    <!-- โมเดลยืมหนังสือนะจ๊ะ -->
-                    <div class="modal fade" id="borrow_book" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h1 class="modal-title fs-5" id="exampleModalLabel">ยืมหนังสือ</h1>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form action="../php/book_add.php" method="post" class="m-1">
-                                        <div class="input-group mb-3">
-                                            <input type="text" class="form-control" placeholder="รหัสหนังสือ" aria-label="Recipient's username" aria-describedby="button-addon2">
-                                            <button class="btn btn-outline-secondary" type="button" id="button-addon2">Button</button>
-                                        </div>
-                                        <div class="mb-3 mt-2">
-                                            <label for="exampleInputEmail1" class="form-label">รหัสผู้ใช้</label>
-                                            <input name="b_name" type="text" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="" aria-describedby="">
-                                        </div>
-
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
-                                    <button type="submit" class="btn btn-primary">ยืนยัน</button>
-                                    </form>
-
-                                </div>
-                            </div>
-                        </div>
+                        </a>
                     </div>
 
-                    <!-- โมเดลคืนหนังสือนะจ๊ะ -->
-                    <div class="modal fade" id="return_book" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h1 class="modal-title fs-5" id="exampleModalLabel">เพิ่มหนังสือ</h1>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form action="../php/book_add.php" method="post" class="m-1">
-                                        <div class="mb-3 mt-2">
-                                            <label for="exampleInputEmail1" class="form-label">รหัสหนังสือ</label>
-                                            <input name="b_id" type="text" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="" aria-describedby="">
-                                        </div>
-                                        <div class="mb-3 mt-2">
-                                            <label for="exampleInputEmail1" class="form-label">ชื่อหนังสือ</label>
-                                            <input name="b_name" type="text" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="" aria-describedby="">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="exampleInputPassword1" class="form-label">ผู้แต่ง</label>
-                                            <input name="writer" type="text" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="">
-                                        </div>
-                                        <div class="mb-3 mt-2">
-                                            <label for="exampleInputEmail1" class="form-label">ประเภท</label>
-                                            <input name="cate" type="number" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="" aria-describedby="">
-                                        </div>
-                                        <div class="mb-3 mt-2">
-                                            <label for="exampleInputEmail1" class="form-label">ราคา</label>
-                                            <input name="price" type="number" maxlength="10" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="" aria-describedby="">
-                                        </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
-                                    <button type="submit" class="btn btn-primary">ยืนยัน</button>
-                                    </form>
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
