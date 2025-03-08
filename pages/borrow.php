@@ -1,91 +1,125 @@
 <?php
 session_start();
 include_once("../db/db.php");
-$pagename = "borrow_manage.php";
-if (isset($_POST['userid'])) {
-    $m_user = $_POST['m_user'];
-    $sql_me = "SELECT * FROM `tb_member` WHERE `m_user` ='$m_user'";
-    $result_me = $conn->query($sql_me);
-    $row_me = $result_me->fetch_assoc();
-    if (!empty($row_me)) {
-        $tb_name = "";
-        $_SESSION['m_name'] = $row_me['m_name'];
-    } else {
-        $tb_name = "table-danger";
-        $_SESSION['m_name'] = "ไม่พบ";
-    }
-}
 
-if (isset($_POST['book_id'])) {
-    $b_id = $_POST['b_id'];
-    $sql_b = "SELECT * FROM `tb_book` WHERE `b_id` ='$b_id'";
-    $result_b = $conn->query($sql_b);
-    $row_b = $result_b->fetch_assoc();
-    if (!empty($row_b)) {
-        $tb_book = "";
-        $_SESSION['b_name'] = $row_b['b_name'];
-    } else {
-        $tb_book = "table-danger";
-        $_SESSION['b_name'] = "ไม่พบ";
+$memberData = null;
+$bookData = null;
+$message = "";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    if (!empty($_POST['m_user'])) {
+        $stmt = $conn->prepare("SELECT * FROM tb_member WHERE m_user = ?");
+        $stmt->bind_param("s", $_POST['m_user']);
+        $stmt->execute();
+        $memberResult = $stmt->get_result();
+        $memberData = $memberResult->fetch_assoc();
+        $stmt->close();
+    }
+
+    if (!empty($_POST['b_id'])) {
+        $stmt = $conn->prepare("SELECT * FROM tb_book WHERE b_id = ?");
+        $stmt->bind_param("s", $_POST['b_id']);
+        $stmt->execute();
+        $bookResult = $stmt->get_result();
+        $bookData = $bookResult->fetch_assoc();
+        $stmt->close();
+    }
+
+    if (isset($_POST['confirm_borrow'])) {
+        if ($memberData && $bookData) {
+
+            $stmt_check = $conn->prepare("SELECT * FROM tb_borrow_book WHERE b_id = ? AND br_date_rt IS NULL");
+
+            $stmt_check->bind_param("s", $bookData['b_id']);
+            $stmt_check->execute();
+            $borrowed_result = $stmt_check->get_result();
+            $isBorrowed = $borrowed_result->num_rows > 0;
+            $stmt_check->close();
+
+            if (!$isBorrowed) {
+                $br_date_br = date('Y-m-d');
+                $br_date_rt = NULL;
+                $br_fine = 0;
+
+                $stmt = $conn->prepare("INSERT INTO tb_borrow_book (br_date_br, br_date_rt, b_id, me_user, br_fine) VALUES (?, ?, ?, ?, ?)");
+                $stmt->bind_param("ssssi", $br_date_br, $br_date_rt, $bookData['b_id'], $memberData['m_user'], $br_fine);
+
+                if ($stmt->execute()) {
+                    $message = "✅ ยืนยันการยืมสำเร็จ!";
+                } else {
+                    $message = "❌ เกิดข้อผิดพลาดในการยืนยันการยืม";
+                }
+                $stmt->close();
+            } else {
+                $message = "⚠️ หนังสือเล่มนี้ถูกยืมไปแล้วและยังไม่ได้คืน!";
+            }
+        } else {
+            $message = "❌ ไม่สามารถยืนยันการยืมได้ (ข้อมูลไม่ครบถ้วน)";
+        }
     }
 }
 ?>
+
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>หน้าแรก</title>
+    <title>ระบบยืมคืนหนังสือ</title>
     <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="../style/fonts.css">
-
 </head>
 
 <body>
-    <?php
-    include_once("../components/nav.php");
-    ?>
-    <div class="container">
-        <div class="row">
-            <div class="col d-flex justify-content-center mt-5">
-                <div class="card d-flex" style="width: 35rem;">
-                    <form action="./php/login.php" method="post" class="m-5">
-                        <h1>ยืมหนังสือ</h1>
-                        <div class="input-group mb-3">
-                            <input value="<?php echo $m_user = isset($_POST['m_user']) ? $_POST['m_user'] : ""; ?>" type="text" class="form-control" name="m_user" placeholder="รหัสสมาชิก" aria-label="Recipient's username" aria-describedby="button-addon2">
-                            <button formaction="borrow.php" name="userid" class="btn btn-outline-primary" type="submit" id="button-addon2">เพิ่ม</button>
-                        </div>
-                        <div class="input-group mb-3">
-                            <input value="<?php echo $b_id = isset($_POST['b_id']) ? $_POST['b_id'] : ""; ?>" type="text" class="form-control" name="b_id" placeholder="รหัสหนังสือ" aria-label="Recipient's username" aria-describedby="button-addon2">
-                            <button formaction="borrow.php" name="book_id" class="btn btn-outline-primary" type="submit" id="button-addon2">เพิ่ม</button>
-                        </div>
+    <?php include_once("../components/nav.php"); ?>
 
-                        <div class="">
-                            <?php if (!empty($_SESSION['m_name']) || !empty($_SESSION['b_name'])): ?>
-                                <table class="table table-bordered">
-                                    <tbody>
-                                        <tr>
-                                            <td class="<?php echo $tb_name ?>">ชื่อผู้ใช้</td>
-                                            <td class="<?php echo $tb_name ?>" style="width: 15rem;"><?php echo isset($_SESSION['m_name']) ? $_SESSION['m_name'] : ""; ?></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="<?php echo $tb_book ?>">ชื่อหนังสือ</td>
-                                            <td class="<?php echo $tb_book ?>"><?php echo isset($_SESSION['b_name']) ? $_SESSION['b_name'] : ""; ?></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            <?php endif; ?>
-                        </div>
+    <div class="container mt-5">
+        <div class="card mx-auto" style="width: 40rem;">
+            <form action="borrow.php" method="post" class="m-5">
+                <h2 class="mb-4">ระบบยืมหนังสือ</h2>
 
-                        <button type="submit d-flex" name="submit" class="btn btn-success">ยืนยัน</button>
-                    </form>
+                <div class="mb-3">
+                    <input type="text" class="form-control" name="m_user" placeholder="รหัสสมาชิก" value="<?= htmlspecialchars($_POST['m_user'] ?? '') ?>" required>
                 </div>
 
-            </div>
+                <div class="mb-3">
+                    <input type="text" class="form-control" name="b_id" placeholder="รหัสหนังสือ" value="<?= htmlspecialchars($_POST['b_id'] ?? '') ?>" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary mb-4">ค้นหา</button>
+
+                <?php if ($memberData || $bookData): ?>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>ชื่อสมาชิก</th>
+                            <td><?= $memberData ? htmlspecialchars($memberData['m_name']) : "ไม่พบสมาชิก" ?></td>
+                        </tr>
+                        <tr>
+                            <th>ชื่อหนังสือ</th>
+                            <td><?= $bookData ? htmlspecialchars($bookData['b_name']) : "ไม่พบหนังสือ" ?></td>
+                        </tr>
+                    </table>
+
+                    <?php if ($memberData && $bookData): ?>
+                        <button type="submit" name="confirm_borrow" class="btn btn-success">✅ ยืนยันการยืม</button>
+                    <?php endif; ?>
+                <?php endif; ?>
+
+                <?php if (!empty($message)): ?>
+                    <div class="alert alert-info mt-3">
+                        <?= htmlspecialchars($message) ?>
+                    </div>
+                <?php endif; ?>
+
+            </form>
+
         </div>
     </div>
+
+    <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
-<script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 
 </html>

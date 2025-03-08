@@ -1,137 +1,109 @@
 <?php
 session_start();
 include_once("../db/db.php");
+
 $pagename = "borrow_manage.php";
 unset($_SESSION['m_name']);
 unset($_SESSION['b_name']);
+
+$search = $_POST['search'] ?? "";
+
+$sql = "SELECT br.br_id, br.br_date_br, br.br_date_rt, br.br_fine, 
+               b.b_name, b.b_id, m.m_name, m.m_user
+        FROM tb_borrow_book br
+        JOIN tb_book b ON br.b_id = b.b_id
+        JOIN tb_member m ON br.me_user = m.m_user ";
+
+if (!empty($search)) {
+    $sql .= " WHERE b.b_id LIKE ? OR m.m_user LIKE ? ";
+}
+
+$sql .= " ORDER BY br.br_date_br DESC";
+
+$stmt = $conn->prepare($sql);
+
+if (!empty($search)) {
+    $like_search = "%{$search}%";
+    $stmt->bind_param("ss", $like_search, $like_search);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>หน้าแรก</title>
+    <title>จัดการการยืมคืน</title>
     <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../style/fonts.css">
-
 </head>
 
 <body>
-    <?php
-    include_once("../components/nav.php");
-    ?>
-    <div class="container">
+    <?php include_once("../components/nav.php"); ?>
+
+    <div class="container mt-3">
         <div class="row">
-            <div class="col">
-                <div class="row mt-3">
-                    <div class="col-md-6 d-flex">
-                        <form action="book_manage.php" method="post" class="d-flex w-100" role="search">
-                            <input class="form-control me-2" name="search" type="search" placeholder="ค้นหา..." aria-label="Search">
-                            <button class="btn btn-outline-success" type="submit">ค้นหา</button>
-                        </form>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <a href="borrow.php" class="btn btn-success "  >
-                            ยืมหนังสือ
-                        </a>
-                        <a href="borrow.php" type="button" class="btn btn-warning " data-bs-toggle="modal" data-bs-target="#return_book">
-                            คืนหนังสือ
-                        </a>
-                    </div>
-
-                </div>
+            <div class="col-md-6">
+                <form action="borrow_manage.php" method="post" class="d-flex w-100" role="search">
+                    <input class="form-control me-2" name="search" type="search" placeholder="รหัสหนังสือหรือรหัสผู้ใช้งาน" aria-label="Search" value="<?= htmlspecialchars($search) ?>">
+                    <button class="btn btn-outline-success" type="submit">ค้นหา</button>
+                </form>
             </div>
-
-
-
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">รหัสหนังสือ</th>
-                        <th scope="col">ชื่อหนังสือ</th>
-                        <th scope="col">ผู้แต่ง</th>
-                        <th scope="col">ประเภท</th>
-                        <th scope="col">ราคา</th>
-                        <th scope="col">จัดการ</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    if (isset($_POST['search'])) {
-                        $search = $_POST['search'];
-                        $sql_b = "SELECT * FROM `tb_book` WHERE `b_id` LIKE '%$search%' OR `b_name`LIKE '%$search%';";
-                    } else {
-                        $sql_b = "SELECT * FROM `tb_book`";
-                    }
-                    $result_b = $conn->query($sql_b);
-                    if ($result_b->num_rows > 0):
-                        while ($row_b = $result_b->fetch_assoc()):
-                    ?>
-                            <tr>
-                                <th scope="row"><?php echo $row_b['id'] ?></th>
-                                <td><?php echo $row_b['b_id'] ?></td>
-                                <td><?php echo $row_b['b_name'] ?></td>
-                                <td><?php echo $row_b['b_writer'] ?></td>
-                                <td><?php echo $row_b['b_category'] ?></td>
-                                <td><?php echo $row_b['b_price'] ?></td>
-                                <td class="" style="width: 20rem;">
-                                    <button type="button" class="btn btn-warning " data-bs-toggle="modal" data-bs-target="#edit_user<?php echo $row_b['id'] ?>">
-                                        แก้ไขข้อมูล
-                                    </button>
-                                    <div class="modal fade" id="edit_user<?php echo $row_b['id'] ?>" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h1 class="modal-title fs-5" id="exampleModalLabel">แก้ไขข้อมูลสมาชิกของ <?php echo $row_b['b_id'] ?></h1>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <form action="../php/book_edit.php" method="post" class="m-1">
-                                                        <input hidden value="<?php echo $row_b['id'] ?>" name="id" type="text" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="" aria-describedby="">
-                                                        <div class="mb-3 mt-2">
-                                                            <label for="exampleInputEmail1" class="form-label">รหัสหนังสือ</label>
-                                                            <input value="<?php echo $row_b['b_id'] ?>" name="b_id" type="text" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="" aria-describedby="">
-                                                        </div>
-                                                        <div class="mb-3 mt-2">
-                                                            <label for="exampleInputEmail1" class="form-label">ชื่อหนังสือ</label>
-                                                            <input value="<?php echo $row_b['b_name'] ?>" name="b_name" type="text" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="" aria-describedby="">
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label for="exampleInputPassword1" class="form-label">ผู้แต่ง</label>
-                                                            <input value="<?php echo $row_b['b_writer'] ?>" name="writer" type="text" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="">
-                                                        </div>
-                                                        <div class="mb-3 mt-2">
-                                                            <label for="exampleInputEmail1" class="form-label">ประเภท</label>
-                                                            <input value="<?php echo $row_b['b_category'] ?>" name="cate" type="number" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="" aria-describedby="">
-                                                        </div>
-                                                        <div class="mb-3 mt-2">
-                                                            <label for="exampleInputEmail1" class="form-label">ราคา</label>
-                                                            <input value="<?php echo $row_b['b_price'] ?>" name="price" type="number" maxlength="10" class="form-control" placeholder="กรุณากรอกข้อมูล" required id="" aria-describedby="">
-                                                        </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
-                                                    <button type="submit" class="btn btn-primary">ยืนยัน</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <a onclick="return confirm('ยืนยันการลบหนังสือ <?php echo $row_b['b_id'] ?> ?')" name="" id="" class="btn btn-danger" href="../php/book_del.php?id=<?php echo $row_b['id'] ?>" role="button">ลบ</a>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <td class="text-center" colspan="7">ไม่พบข้อมูลที่ค้นหา</td>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+            <div class="col-md-6 text-end">
+                <a href="borrow.php" class="btn btn-success">ยืมหนังสือ</a>
+                <a href="return.php" class="btn btn-warning">คืนหนังสือ</a>
+                <a href="statistics.php" class="btn btn-primary">สถิติ</a>
+            </div>
         </div>
+
+        <div class="row mt-4">
+            <div class="col">
+                <h3>รายการยืมคืนหนังสือ</h3>
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>รหัสการยืม</th>
+                            <th>รหัสหนังสือ</th>
+                            <th>ชื่อหนังสือ</th>
+                            <th>รหัสผู้ใช้งาน</th>
+                            <th>ชื่อสมาชิก</th>
+                            <th>วันที่ยืม</th>
+                            <th>วันที่คืน</th>
+                            <th>ค่าปรับ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($result->num_rows > 0): ?>
+                            <?php while ($row = $result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($row['br_id']) ?></td>
+                                    <td><?= htmlspecialchars($row['b_id']) ?></td>
+                                    <td><?= htmlspecialchars($row['b_name']) ?></td>
+                                    <td><?= htmlspecialchars($row['m_user']) ?></td>
+                                    <td><?= htmlspecialchars($row['m_name']) ?></td>
+                                    <td><?= htmlspecialchars($row['br_date_br']) ?></td>
+                                    <td>
+                                        <?= $row['br_date_rt'] ? htmlspecialchars($row['br_date_rt']) : '<span class="text-danger">ยังไม่คืน</span>' ?>
+                                    </td>
+                                    <td><?= $row['br_fine'] > 0 ? number_format($row['br_fine'], 2) . " บาท" : '-' ?></td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="8" class="text-center text-danger">ไม่พบข้อมูลที่ค้นหา!</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
-    </div>
+
+    <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
-<script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 
 </html>
