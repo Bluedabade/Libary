@@ -54,6 +54,7 @@ $total_not_returned = $conn->query("SELECT COUNT(*) AS total FROM tb_borrow_book
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>สรุปข้อมูลโดยรวมและกราฟ</title>
     <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../style/fonts.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
